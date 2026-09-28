@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>拾光记 · 把日子过成可以回看的模样</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Ma+Shan+Zheng&family=Long+Cang&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+<script src="https://cdn.jsdelivr.net/npm/@tencent-ai/workbuddy-cloud-sdk@dev/lib/index.global.js"></script>
+</head>
+<body>
+
+<!-- 胶片颗粒 & 暗角 -->
+<div class="grain" aria-hidden="true"></div>
+<div class="vignette" aria-hidden="true"></div>
+
+<!-- 顶部导航 -->
+<header class="nav" id="nav">
+  <a class="nav__logo" href="#top">
+    <svg viewBox="0 0 24 24" class="icon"><path d="M12 3v2M12 19v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M3 12h2M19 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.6"/></svg>
+    <span>拾光记</span>
+  </a>
+  <nav class="nav__links">
+    <a href="#timeline" data-auth-only>时光轴</a>
+    <a href="#gallery" data-auth-only>照片墙</a>
+    <a href="#square" data-auth-only>广场</a>
+    <button class="btn btn--primary" id="openComposer" data-auth-only>
+      <svg viewBox="0 0 24 24" class="icon"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      写日记
+    </button>
+    <button class="btn btn--ghost" id="loginBtn" data-guest-only>
+      <svg viewBox="0 0 24 24" class="icon"><circle cx="12" cy="8" r="3.6" stroke="currentColor" stroke-width="1.6"/><path d="M4.5 20a7.5 7.5 0 0 1 15 0" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
+      登录 / 注册
+    </button>
+    <button class="navme" id="profileBtn" data-auth-only hidden title="我的主页">
+      <span class="navme__avatar" id="navAvatar"></span>
+      <span class="navme__name" id="navName"></span>
+    </button>
+    <button class="userchip__out" id="logoutBtn" data-auth-only hidden title="退出登录">退出</button>
+  </nav>
+</header>
+
+<div id="appMain">
+
+<!-- Hero -->
+<section class="hero" id="top">
+  <div class="hero__bg" style="background-image:url('assets/images/hero-desk.png')"></div>
+  <div class="hero__scrim"></div>
+  <canvas class="hero__dust" id="dust" aria-hidden="true"></canvas>
+  <div class="hero__content">
+    <p class="hero__eyebrow reveal">A JOURNAL OF ORDINARY DAYS</p>
+    <h1 class="hero__title reveal">把日子过成<br>可以回看的模样</h1>
+    <p class="hero__sub reveal">文字、照片与影像，都在这里慢慢沉淀。<br>平凡的一天，也值得被认真收藏。</p>
+    <div class="hero__actions reveal">
+      <button class="btn btn--primary btn--lg" id="heroWrite">
+        <svg viewBox="0 0 24 24" class="icon"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+        记录今天
+      </button>
+      <a class="btn btn--ghost btn--lg" href="#timeline" id="heroTimeline">翻开时光轴</a>
+    </div>
+  </div>
+  <div class="hero__scroll" aria-hidden="true"><span></span></div>
+</section>
+
+<!-- 统计条 -->
+<section class="stats" id="stats" data-auth-only>
+  <div class="stats__item"><strong id="statEntries">0</strong><span>篇日记</span></div>
+  <div class="stats__divider"></div>
+  <div class="stats__item"><strong id="statPhotos">0</strong><span>张照片</span></div>
+  <div class="stats__divider"></div>
+  <div class="stats__item"><strong id="statVideos">0</strong><span>段影像</span></div>
+  <div class="stats__divider"></div>
+  <div class="stats__item"><strong id="statDays">0</strong><span>个被收藏的日子</span></div>
+</section>
+
+<!-- 未登录引导墙 -->
+<section class="authwall" id="authWall" hidden>
+  <p class="authwall__hand">你的日子，只有你能看见</p>
+  <p class="authwall__sub">登录后，日记、照片与视频都会安全地存放在云端，只属于你。<br>想分享某一篇时，由你亲手打开公开的开关。</p>
+  <button class="btn btn--primary btn--lg" id="wallLogin">登录 / 注册，开始记录</button>
+</section>
+
+<!-- 时光轴 -->
+<section class="section" id="timeline" data-auth-only>
+  <div class="section__head reveal">
+    <p class="section__eyebrow">TIMELINE</p>
+    <h2 class="section__title">时光轴</h2>
+    <p class="section__desc">日子一页一页翻过去，留下的都是证据。</p>
+  </div>
+  <div class="mood-filter reveal" id="moodFilter">
+    <button class="chip is-active" data-mood="all">全部</button>
+    <button class="chip" data-mood="sunny">晴朗</button>
+    <button class="chip" data-mood="warm">温柔</button>
+    <button class="chip" data-mood="rainy">落雨</button>
+    <button class="chip" data-mood="starry">星夜</button>
+  </div>
+  <div class="timeline" id="timelineList"></div>
+  <div class="empty" id="timelineEmpty" hidden>
+    <p class="empty__hand">这里还空着呢</p>
+    <p>写下第一篇日记，让回忆有个家。</p>
+  </div>
+</section>
+
+<!-- 照片墙 -->
+<section class="section section--alt" id="gallery" data-auth-only>
+  <div class="section__head reveal">
+    <p class="section__eyebrow">GALLERY</p>
+    <h2 class="section__title">照片墙</h2>
+    <p class="section__desc">所有被镜头留住的一瞬间，都钉在这面墙上。</p>
+  </div>
+  <div class="masonry" id="masonry"></div>
+  <div class="empty" id="galleryEmpty" hidden>
+    <p class="empty__hand">墙上还没有照片</p>
+    <p>写日记时顺手放上几张照片或一段视频吧。</p>
+  </div>
+</section>
+
+<!-- 广场：所有人的公开日记 -->
+<section class="section" id="square" data-auth-only>
+  <div class="section__head reveal">
+    <p class="section__eyebrow">SQUARE</p>
+    <h2 class="section__title">广场</h2>
+    <p class="section__desc">大家愿意公开的日子，都摊在这里晒晒太阳。</p>
+  </div>
+  <div class="square" id="squareList"></div>
+  <div class="empty" id="squareEmpty" hidden>
+    <p class="empty__hand">广场还静悄悄的</p>
+    <p>把你某篇日记的「公开分享」打开，它就会出现在这里。</p>
+  </div>
+</section>
+
+<footer class="footer">
+  <p class="footer__hand">慢慢走，别忘了回头看。</p>
+  <p class="footer__meta">拾光记 · 数据保存在云端，只有你本人可见</p>
+</footer>
+
+</div><!-- /appMain -->
+
+<!-- 分享查看页（无需登录） -->
+<section class="shareview" id="shareView" hidden>
+  <div class="shareview__paper">
+    <p class="shareview__brand">拾光记 · 有人想给你看一篇日记</p>
+    <div id="shareBody"></div>
+    <footer class="shareview__foot">
+      <a class="btn btn--ghost" href="#" id="shareHome">回到拾光记首页</a>
+    </footer>
+  </div>
+</section>
+
+<!-- 登录 / 注册弹窗 -->
+<div class="modal" id="authModal" hidden>
+  <div class="modal__backdrop" data-close></div>
+  <div class="modal__panel modal__panel--auth" role="dialog" aria-modal="true" aria-label="登录">
+    <header class="modal__head">
+      <h3 id="authTitle">欢迎回来</h3>
+      <button class="iconbtn" data-close aria-label="关闭">
+        <svg viewBox="0 0 24 24" class="icon"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </header>
+    <div class="authtabs" id="authTabs">
+      <button class="authtab is-active" data-tab="password">密码登录</button>
+      <button class="authtab" data-tab="otp">验证码登录</button>
+      <button class="authtab" data-tab="signup">注册</button>
+    </div>
+
+    <!-- 密码登录 -->
+    <form class="authform" id="formPassword" data-pane="password">
+      <div class="field"><label for="apEmail">邮箱</label><input type="email" id="apEmail" required placeholder="you@example.com"></div>
+      <div class="field"><label for="apPass">密码</label><input type="password" id="apPass" required placeholder="输入密码" minlength="6"></div>
+      <div class="form__error" data-err hidden></div>
+      <button type="submit" class="btn btn--primary btn--block">登录</button>
+      <button type="button" class="linklike" id="gotoForgot">忘记密码了？</button>
+    </form>
+
+    <!-- 验证码登录 -->
+    <form class="authform" id="formOtp" data-pane="otp" hidden>
+      <div class="field"><label for="aoEmail">邮箱</label><input type="email" id="aoEmail" required placeholder="you@example.com"></div>
+      <div class="field">
+        <label for="aoCode">邮箱验证码</label>
+        <div class="code-row">
+          <input type="text" id="aoCode" required placeholder="6 位验证码" inputmode="numeric" autocomplete="one-time-code">
+          <button type="button" class="btn btn--ghost" id="aoSend">获取验证码</button>
+        </div>
+      </div>
+      <div class="form__error" data-err hidden></div>
+      <button type="submit" class="btn btn--primary btn--block">登录</button>
+    </form>
+
+    <!-- 注册 -->
+    <form class="authform" id="formSignup" data-pane="signup" hidden>
+      <div class="field"><label for="asEmail">邮箱</label><input type="email" id="asEmail" required placeholder="you@example.com"></div>
+      <div class="field"><label for="asPass">设置密码</label><input type="password" id="asPass" required placeholder="至少 6 位" minlength="6"></div>
+      <div class="field">
+        <label for="asCode">邮箱验证码</label>
+        <div class="code-row">
+          <input type="text" id="asCode" required placeholder="6 位验证码" inputmode="numeric" autocomplete="one-time-code">
+          <button type="button" class="btn btn--ghost" id="asSend">获取验证码</button>
+        </div>
+      </div>
+      <div class="form__error" data-err hidden></div>
+      <button type="submit" class="btn btn--primary btn--block">注册并登录</button>
+    </form>
+
+    <!-- 忘记密码 -->
+    <form class="authform" id="formForgot" data-pane="forgot" hidden>
+      <p class="authform__hint">输入注册邮箱，我们会发一封验证码邮件，验证后即可设置新密码。</p>
+      <div class="field"><label for="afEmail">邮箱</label><input type="email" id="afEmail" required placeholder="you@example.com"></div>
+      <div class="field">
+        <label for="afCode">邮箱验证码</label>
+        <div class="code-row">
+          <input type="text" id="afCode" required placeholder="6 位验证码" inputmode="numeric">
+          <button type="button" class="btn btn--ghost" id="afSend">获取验证码</button>
+        </div>
+      </div>
+      <div class="field"><label for="afPass">新密码</label><input type="password" id="afPass" required placeholder="至少 6 位" minlength="6"></div>
+      <div class="form__error" data-err hidden></div>
+      <button type="submit" class="btn btn--primary btn--block">重置密码并登录</button>
+      <button type="button" class="linklike" id="backToLogin">返回登录</button>
+    </form>
+  </div>
+</div>
+
+<!-- 个人主页弹窗 -->
+<div class="modal" id="profileModal" hidden>
+  <div class="modal__backdrop" data-close></div>
+  <div class="modal__panel modal__panel--auth" role="dialog" aria-modal="true" aria-label="我的主页">
+    <header class="modal__head">
+      <h3>我的主页</h3>
+      <button class="iconbtn" data-close aria-label="关闭">
+        <svg viewBox="0 0 24 24" class="icon"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </header>
+    <form class="authform" id="profileForm">
+      <div class="profile-avatar-row">
+        <div class="profile-avatar" id="profileAvatarPreview"></div>
+        <div class="profile-avatar-actions">
+          <label class="btn btn--ghost">
+            换头像
+            <input type="file" id="avatarInput" accept="image/*" hidden>
+          </label>
+          <p class="profile-avatar-hint">会展示在广场与你公开的日记里</p>
+        </div>
+      </div>
+      <div class="field">
+        <label for="pNickname">名字</label>
+        <input type="text" id="pNickname" maxlength="20" placeholder="给自己起个温暖的名字">
+      </div>
+      <div class="field">
+        <label for="pBio">签名</label>
+        <textarea id="pBio" rows="3" maxlength="120" placeholder="一句话介绍自己，比如：认真生活的人。"></textarea>
+      </div>
+      <div class="profile-stats" id="profileStats"></div>
+      <div class="form__error" data-err hidden></div>
+      <button type="submit" class="btn btn--primary btn--block" id="profileSave">保存</button>
+    </form>
+  </div>
+</div>
+
+<!-- 公开日记只读查看器（广场 / 他人日记） -->
+<div class="modal" id="publicReader" hidden>
+  <div class="modal__backdrop" data-close></div>
+  <article class="modal__panel modal__panel--paper" role="dialog" aria-modal="true">
+    <button class="iconbtn modal__close" data-close aria-label="关闭">
+      <svg viewBox="0 0 24 24" class="icon"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div id="publicReaderBody"></div>
+  </article>
+</div>
+
+<!-- 写日记弹窗 -->
+<div class="modal" id="composer" hidden>
+  <div class="modal__backdrop" data-close></div>
+  <div class="modal__panel" role="dialog" aria-modal="true" aria-label="写日记">
+    <header class="modal__head">
+      <h3>写下这一天</h3>
+      <button class="iconbtn" data-close aria-label="关闭">
+        <svg viewBox="0 0 24 24" class="icon"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      </button>
+    </header>
+    <form id="entryForm" class="form">
+      <div class="form__row">
+        <div class="field">
+          <label for="fDate">日期</label>
+          <input type="date" id="fDate" required>
+        </div>
+        <div class="field">
+          <label>今天的心情</label>
+          <div class="mood-picker" id="moodPicker">
+            <button type="button" class="mood is-active" data-mood="sunny" title="晴朗"><svg viewBox="0 0 24 24" class="icon"><circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg><span>晴朗</span></button>
+            <button type="button" class="mood" data-mood="warm" title="温柔"><svg viewBox="0 0 24 24" class="icon"><path d="M12 20s-7-4.4-9.2-8.6C1.2 8.4 3 5 6.4 5c2 0 3.4 1.1 4.2 2.3h2.8C14.2 6.1 15.6 5 17.6 5c3.4 0 5.2 3.4 3.6 6.4C19 15.6 12 20 12 20Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/></svg><span>温柔</span></button>
+            <button type="button" class="mood" data-mood="rainy" title="落雨"><svg viewBox="0 0 24 24" class="icon"><path d="M7 15a5 5 0 1 1 .8-9.9A6 6 0 0 1 19.5 8 4 4 0 0 1 18 15H7Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/><path d="M8 18l-.8 2M12.5 18l-.8 2M17 18l-.8 2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg><span>落雨</span></button>
+            <button type="button" class="mood" data-mood="starry" title="星夜"><svg viewBox="0 0 24 24" class="icon"><path d="M19 13.5A7.5 7.5 0 0 1 10.5 5 7.5 7.5 0 1 0 19 13.5Z" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linejoin="round"/><path d="M17 3l.6 1.7L19.3 5.3l-1.7.6L17 7.6l-.6-1.7-1.7-.6 1.7-.6Z" fill="currentColor"/></svg><span>星夜</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="field">
+        <label for="fTitle">标题</label>
+        <input type="text" id="fTitle" placeholder="给今天起个名字，比如：风很大的傍晚" maxlength="40" required>
+      </div>
+      <div class="field">
+        <label for="fContent">正文</label>
+        <textarea id="fContent" rows="7" placeholder="今天发生了什么？见了什么人，吃了什么，想了什么……想到哪写到哪就好。" required></textarea>
+      </div>
+      <div class="field">
+        <label>照片 / 视频</label>
+        <label class="dropzone" id="dropzone">
+          <input type="file" id="fMedia" accept="image/*,video/*" multiple hidden>
+          <svg viewBox="0 0 24 24" class="icon icon--lg"><path d="M12 16V4M7 9l5-5 5 5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" fill="none"/><path d="M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>
+          <span>点击或拖入照片、视频</span>
+          <small>文件加密存储在云端，仅你本人可见</small>
+        </label>
+        <div class="previews" id="previews"></div>
+      </div>
+      <div class="form__error" id="formError" role="alert" hidden></div>
+      <footer class="form__foot">
+        <button type="button" class="btn btn--ghost" data-close>再想想</button>
+        <button type="submit" class="btn btn--primary" id="saveBtn">收进时光轴</button>
+      </footer>
+    </form>
+  </div>
+</div>
+
+<!-- 日记详情弹窗 -->
+<div class="modal" id="reader" hidden>
+  <div class="modal__backdrop" data-close></div>
+  <article class="modal__panel modal__panel--paper" role="dialog" aria-modal="true">
+    <button class="iconbtn modal__close" data-close aria-label="关闭">
+      <svg viewBox="0 0 24 24" class="icon"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+    </button>
+    <div id="readerBody"></div>
+  </article>
+</div>
+
+<!-- 灯箱 -->
+<div class="lightbox" id="lightbox" hidden>
+  <div class="lightbox__backdrop" data-close></div>
+  <button class="iconbtn lightbox__close" data-close aria-label="关闭">
+    <svg viewBox="0 0 24 24" class="icon"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+  </button>
+  <button class="iconbtn lightbox__nav lightbox__nav--prev" id="lbPrev" aria-label="上一个">
+    <svg viewBox="0 0 24 24" class="icon"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+  </button>
+  <figure class="lightbox__stage" id="lbStage"></figure>
+  <button class="iconbtn lightbox__nav lightbox__nav--next" id="lbNext" aria-label="下一个">
+    <svg viewBox="0 0 24 24" class="icon"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg>
+  </button>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="js/main.js"></script>
+</body>
+</html>
